@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumina Records | V24 Final Fix</title>
+    <title>Lumina Records | V28 Surgical Precision</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +20,7 @@
             --font-display: 'Cinzel', serif;
             --font-body: 'Space Grotesk', sans-serif;
             --hologram: #A5F2F3; /* Soft Cyan */
-            --spotify: #1DB954; --tiktok: #00f2ea; --insta: #E1306C; --gold: #D4AF37;
+            --spotify: #1DB954; --tiktok: #FF00F0; --insta: #E1306C; --gold: #D4AF37;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -59,14 +59,7 @@
         .parallax-wrapper { display: flex; flex-direction: column; align-items: center; transform-style: preserve-3d; }
         .title-container { display: flex; flex-direction: column; align-items: flex-end; }
         .title-row { display: flex; align-items: center; gap: 20px; }
-        
-        /* HERO TITLE */
-        .hero-title { 
-            font-family: var(--font-body); font-weight: 700; font-size: 6rem; 
-            text-shadow: 0 0 40px rgba(255,255,255,0.1); margin: 0; letter-spacing: -2px;
-            white-space: nowrap; /* Evita saltos de linea */
-        }
-        
+        .hero-title { font-family: var(--font-body); font-weight: 700; font-size: 6rem; text-shadow: 0 0 40px rgba(255,255,255,0.1); margin: 0; letter-spacing: -2px; white-space: nowrap; }
         .star-svg { width: 60px; height: 60px; fill: white; filter: drop-shadow(0 0 10px rgba(255,255,255,0.9)) drop-shadow(0 0 30px rgba(0,255,255,0.4)); animation: breatheStar 4s infinite ease-in-out; }
         .est-text { font-size: 0.7rem; letter-spacing: 6px; opacity: 0.6; margin-top: -15px; margin-right: 10px; font-weight: 400; color: #aaa; }
         .social-row { display: flex; gap: 30px; margin-top: 40px; transform: translateZ(20px); align-self: center; }
@@ -90,13 +83,7 @@
         .stack-wrapper:hover .w-center .vinyl-cover { transform: scale(1.1); z-index: 20; box-shadow: 0 0 60px rgba(255,255,255,0.1); border-color: #fff; }
         .drop-info { text-align: center; opacity: 0; transform: translateY(30px); z-index: 20; transition: opacity 0.5s; }
         .tape-container { position: absolute; top: 50%; left: 0; width: 100%; height: 400px; transform: translateY(-50%); display: flex; align-items: center; overflow: hidden; z-index: 10; visibility: hidden; }
-        
-        /* TAPE TRACK CONFIG */
-        .tape-track { 
-            display: flex; gap: 40px; padding: 0 40px; 
-            width: max-content; 
-            /* 16 items * (280 + 40) = 5120px width exactly */
-        }
+        .tape-track { display: flex; gap: 40px; padding: 0 40px; width: max-content; }
         .tape-item { width: 280px; height: 280px; flex-shrink: 0; position: relative; cursor: none; transform-origin: center center; }
         .tape-item img { width: 100%; height: 100%; object-fit: cover; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); filter: grayscale(100%) brightness(0.8); transition: all 0.4s ease; }
         .tape-item:hover img { filter: grayscale(0%) brightness(1.1); transform: scale(1.1); box-shadow: 0 0 40px rgba(255,255,255,0.2); }
@@ -127,7 +114,10 @@
         .vision-container { display: grid; grid-template-columns: 1fr 1.5fr; gap: 80px; max-width: 1400px; width: 100%; align-items: center; position: relative; z-index: 2; }
         .vision-graphic { position: relative; width: 300px; height: 300px; display: flex; justify-content: center; align-items: center; }
         .kinetic-ring-svg { width: 100%; height: 100%; animation: spinSlow 20s linear infinite; }
-        .kinetic-text { font-family: var(--font-body); font-size: 10px; fill: #666; letter-spacing: 4px; text-transform: uppercase; }
+        
+        /* FIX: TEXTO AJUSTADO CON PRECISIÓN QUIRÚRGICA */
+        .kinetic-text { font-family: var(--font-body); font-size: 6px; fill: #666; letter-spacing: 2px; text-transform: uppercase; }
+        
         .vision-center-icon { position: absolute; font-family: var(--font-display); font-size: 4rem; color: #fff; }
         .vision-content { padding-left: 40px; border-left: 1px solid #333; position: relative; }
         .vision-orbit { position: absolute; width: 600px; height: 600px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 50%; top: -20%; left: -20%; animation: spin 40s linear infinite; pointer-events: none; }
@@ -200,9 +190,9 @@
             .cursor-dot, .cursor-outline, .scroll-progress-track, .floating-shape, .roster-decor, .pyramid-glow { display: none !important; }
             body { cursor: auto; }
             header { padding: 20px; flex-direction: column; gap: 15px; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); }
-            nav { gap: 15px; flex-wrap: wrap; justify-content: center; }
+            /* MOBILE NAV GAP INCREASED */
+            nav { gap: 40px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
             nav a { margin: 0; font-size: 0.65rem; }
-            /* LOGO SIZE FIX */
             .hero-title { font-size: 10vw; letter-spacing: -1px; }
             .est-text { margin-right: 0; margin-top: 0; align-self: center; }
             .title-container { align-items: center; }
