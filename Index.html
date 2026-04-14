@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina Records | V30 Smoke Core</title>
+    
+    <link rel="icon" href="small_logo.png" type="image/png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollToPlugin.min.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #020202;
+            --text-main: #FFFFFF;
+            --font-display: 'Syne', sans-serif;
+            --font-body: 'Space Grotesk', sans-serif;
+            --hologram: #A5F2F3;
+            --spotify: #1DB954; --tiktok: #FF00F0; --insta: #E1306C; --gold: #D4AF37;
+            /* Brand palette */
+            --mauve: #C669EA;
+            --plum: #FFB6F5;
+            --onyx: #0A0A0A;
+            --berry: #874453;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg-color); color: var(--text-main); font-family: var(--font-body);
+            overflow-x: hidden; background: #020202; cursor: none;
+        }
+
+        /* --- CURSOR (INVERT TOTAL) --- */
+        .cursor-dot { position: fixed; top: 0; left: 0; width: 6px; height: 6px; background: white; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 1000001; mix-blend-mode: difference; }
+        .cursor-outline { position: fixed; top: 0; left: 0; width: 50px; height: 50px; border: 1px solid white; background: rgba(255, 255, 255, 0.05); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 1000000; transition: width 0.3s cubic-bezier(0.19, 1, 0.22, 1), height 0.3s cubic-bezier(0.19, 1, 0.22, 1), background 0.3s, border-color 0.3s; mix-blend-mode: difference; }
+        .cursor-hover { width: 90px !important; height: 90px !important; background: white; border-color: transparent; }
+
+        /* --- VISUAL ENGINE --- */
+        #visual-engine { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+
+        /* --- SCROLL LINE --- */
+        .scroll-progress-track {
+            position: fixed; right: 30px; top: 50%; transform: translateY(-50%);
+            width: 2px; height: 60vh; background: rgba(255, 255, 255, 0.1); z-index: 9000; overflow: hidden;
+        }
+        .scroll-progress-bar {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+            transform-origin: top center; transform: scaleY(0);
+        }
+
+        /* --- HEADER --- */
+        header { position: fixed; top: 0; width: 100%; padding: 30px 50px; display: flex; justify-content: space-between; align-items: center; z-index: 100000; mix-blend-mode: exclusion; }
+        .logo-mini { font-family: var(--font-body); font-weight: 700; letter-spacing: 2px; }
+        nav a { color: #fff; text-decoration: none; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 2px; margin-left: 30px; opacity: 0.7; transition: 0.3s; cursor: none; }
+        nav a:hover { opacity: 1; text-shadow: 0 0 8px white; }
+
+        /* --- HERO --- */
+        .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; perspective: 1200px; overflow: hidden; }
+        .parallax-wrapper { display: flex; flex-direction: column; align-items: center; transform-style: preserve-3d; }
+        .title-container { display: flex; flex-direction: column; align-items: flex-end; }
+        .title-row { display: flex; align-items: center; gap: 20px; }
+        .hero-title { font-family: var(--font-body); font-weight: 700; font-size: 6rem; text-shadow: 0 0 40px rgba(255,255,255,0.1); margin: 0; letter-spacing: -2px; white-space: nowrap; }
+        .star-svg { width: 60px; height: 60px; fill: white; filter: drop-shadow(0 0 10px rgba(255,255,255,0.9)) drop-shadow(0 0 30px rgba(0,255,255,0.4)); animation: breatheStar 4s infinite ease-in-out; }
+        .est-text { font-size: 0.7rem; letter-spacing: 6px; opacity: 0.6; margin-top: -15px; margin-right: 10px; font-weight: 400; color: #aaa; }
+        .social-row { display: flex; gap: 30px; margin-top: 40px; transform: translateZ(20px); align-self: center; }
+        .social-link { color: #fff; cursor: none; transition: all 0.3s ease; opacity: 0.7; }
+        .social-icon { width: 24px; height: 24px; fill: currentColor; transition: all 0.3s ease; }
+        .social-link:hover { opacity: 1; transform: scale(1.2); }
+        .link-spotify:hover { color: var(--spotify); filter: drop-shadow(0 0 15px var(--spotify)); }
+        .link-insta:hover { color: var(--insta); filter: drop-shadow(0 0 15px var(--insta)); }
+        .link-tiktok:hover { color: var(--tiktok); filter: drop-shadow(0 0 15px var(--tiktok)); }
+        .scroll-unlock { position: absolute; bottom: 40px; width: 100%; text-align: center; }
+        .scroll-text { font-size: 0.65rem; letter-spacing: 6px; text-transform: uppercase; opacity: 0.6; margin-bottom: 10px; }
+        .scroll-line { width: 1px; height: 60px; background: linear-gradient(to bottom, #fff, transparent); margin: 0 auto; }
+
+        /* --- RELEASES --- */
+        .section-releases { height: 120vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        .stack-wrapper { position: relative; width: 340px; height: 340px; display: flex; justify-content: center; align-items: center; cursor: none; margin-bottom: 50px; transform: scale(0.8); z-index: 20; transition: opacity 0.5s; }
+        .card-wrap { position: absolute; width: 100%; height: 100%; transition: all 0.1s; }
+        .vinyl-cover { width: 100%; height: 100%; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 60px rgba(0,0,0,0.9); transition: transform 0.6s cubic-bezier(0.2, 1, 0.3, 1), box-shadow 0.6s ease; }
+        .stack-wrapper:hover .w-left .vinyl-cover { transform: translateX(-70px) rotate(-10deg) scale(1.05); box-shadow: -10px 0 30px rgba(255,255,255,0.05); z-index: 10; }
+        .stack-wrapper:hover .w-right .vinyl-cover { transform: translateX(70px) rotate(10deg) scale(1.05); box-shadow: 10px 0 30px rgba(255,255,255,0.05); z-index: 10; }
+        .stack-wrapper:hover .w-center .vinyl-cover { transform: scale(1.1); z-index: 20; box-shadow: 0 0 60px rgba(255,255,255,0.1); border-color: #fff; }
+        .drop-info { text-align: center; opacity: 0; transform: translateY(30px); z-index: 20; transition: opacity 0.5s; }
+        .tape-container { position: absolute; top: 50%; left: 0; width: 100%; height: 400px; transform: translateY(-50%); display: flex; align-items: center; overflow: hidden; z-index: 10; visibility: hidden; }
+        .tape-track { display: flex; gap: 40px; padding: 0 40px; width: max-content; }
+        .tape-item { width: 280px; height: 280px; flex-shrink: 0; position: relative; cursor: none; transform-origin: center center; }
+        .tape-item img { width: 100%; height: 100%; object-fit: cover; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); filter: grayscale(100%) brightness(0.8); transition: all 0.4s ease; }
+        .tape-item:hover img { filter: grayscale(0%) brightness(1.1); transform: scale(1.1); box-shadow: 0 0 40px rgba(255,255,255,0.2); }
+        .tape-item:hover { z-index: 100; }
+        .tape-nav-arrow { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); width: 50px; height: 50px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 50; cursor: pointer; backdrop-filter: blur(5px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .tape-nav-arrow svg { width: 20px; height: 20px; fill: white; }
+
+        /* --- ROSTER --- */
+        .roster-section { height: 100vh; overflow: hidden; display: flex; align-items: center; background: linear-gradient(to bottom, #020202, #060606); }
+        .roster-container { display: flex; padding-left: 10vw; gap: 5vw; position: relative; }
+        .roster-decor { position: absolute; left: 10vw; top: -80px; animation: spinSlow 20s linear infinite; }
+        .roster-star-svg { width: 60px; height: 60px; fill: var(--hologram); filter: drop-shadow(0 0 10px rgba(165, 242, 243, 0.5)); }
+        .void-spacer { display: none; }
+        /* Roster/Releases/Impact/Submit keep margin-based gaps (canvas visible = intentional) */
+        .section-releases, .roster-section, .achievements-section, .submit-section { margin-top: 30vh; margin-bottom: 30vh; }
+        /* Vision and Mission use padding (NOT margin) so their black bg covers the canvas gap */
+        .vision-section, .mission-section { margin-top: 0; margin-bottom: 0; }
+
+        /* --- SECTION FADE OVERLAYS (roster only - external) --- */
+        .roster-section { position: relative; overflow: visible; margin-bottom: 0; }
+        .roster-section::before { content: ''; position: absolute; bottom: 100%; left: 0; width: 100%; height: 50vh; background: linear-gradient(to bottom, transparent 0%, #020202 100%); pointer-events: none; z-index: 3; }
+        .roster-section::after  { content: ''; position: absolute; top: 100%; left: 0; width: 100%; height: 50vh; background: linear-gradient(to bottom, #050505 0%, #000000 100%); pointer-events: none; z-index: 3; }
+
+        /* Vision: padding extends the section so its bg covers the void above/below */
+        .vision-section { position: relative; overflow: hidden; }
+        /* Internal gradient fades at top and bottom of vision section */
+        .vision-section::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 45vh; background: linear-gradient(to bottom, #000 0%, transparent 100%); pointer-events: none; z-index: 4; }
+        .vision-section::after  { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 45vh; background: linear-gradient(to top, #000 0%, transparent 100%); pointer-events: none; z-index: 4; }
+
+        .submit-section { margin-bottom: 0; position: relative; overflow: visible; }
+        .submit-section::before { content: ''; position: absolute; bottom: 100%; left: 0; width: 100%; height: 50vh; background: linear-gradient(to bottom, transparent 0%, #010101 100%); pointer-events: none; z-index: 3; }
+
+        /* Mission: padding approach — bg covers canvas in the gap */
+        .mission-section { position: relative; overflow: hidden; }
+        .mission-section::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 45vh; background: linear-gradient(to bottom, #000 0%, transparent 100%); pointer-events: none; z-index: 4; }
+        .mission-section::after  { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 45vh; background: linear-gradient(to top, #000 0%, transparent 100%); pointer-events: none; z-index: 4; }
+
+        /* ======================================================
+           MISSION SECTION
+        ====================================================== */
+        .mission-section { background: #000000; padding: calc(45vh + 120px) 0 calc(45vh + 120px); display: flex; flex-direction: column; align-items: center; }
+
+        .mission-intro { text-align: center; padding: 0 10vw; margin-bottom: 140px; }
+        .mission-eyebrow { font-family: var(--font-body); font-size: 0.7rem; letter-spacing: 6px; text-transform: uppercase; color: var(--mauve); opacity: 0.9; margin-bottom: 30px; }
+        .mission-headline { font-family: var(--font-display); font-size: clamp(2.5rem, 5vw, 5rem); font-weight: 700; line-height: 1.05; letter-spacing: -2px; max-width: 900px; margin: 0 auto 40px; color: #fff; }
+        .mission-subline { font-family: var(--font-body); color: #555; font-size: 1.1rem; line-height: 1.8; max-width: 600px; margin: 0 auto; }
+
+        /* --- Playlist Block --- */
+        .playlist-block { width: 100%; margin-bottom: 160px; }
+        .playlist-block-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; padding: 0 10vw; align-items: start; }
+        .playlist-label-col { position: relative; }
+        .playlist-number { font-family: var(--font-display); font-size: 8rem; font-weight: 800; color: rgba(198,105,234,0.06); line-height: 1; user-select: none; pointer-events: none; }
+        .playlist-label-text h3 { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; letter-spacing: -1px; margin-bottom: 16px; color: #fff; margin-top: -20px; }
+        .playlist-label-text p { font-family: var(--font-body); color: #555; font-size: 1rem; line-height: 1.7; max-width: 420px; }
+        .playlist-stat { font-family: var(--font-body); font-size: 0.8rem; color: var(--mauve); letter-spacing: 2px; margin-top: 20px; opacity: 0.9; }
+
+        /* --- Stacked Playlist Cards --- */
+        .pstack-list { display: flex; flex-direction: column; position: relative; }
+        .pstack-item { display: flex; align-items: center; position: relative; margin-top: -50px; z-index: 1; cursor: none; }
+        .pstack-item:first-child { margin-top: 0; }
+        .pstack-item:hover { z-index: 10; }
+        .pstack-cover { width: 240px; height: 240px; flex-shrink: 0; overflow: hidden; transition: transform 0.7s cubic-bezier(0.2, 1, 0.3, 1); box-shadow: 0 30px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(198,105,234,0.06); filter: brightness(0.8); }
+        .pstack-cover img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(30%); transition: filter 0.6s, transform 0.6s; display: block; }
+        .pstack-item:hover .pstack-cover { transform: translateX(-70px); filter: brightness(1); box-shadow: 0 30px 80px rgba(0,0,0,0.9), 0 0 40px rgba(198,105,234,0.15); }
+        .pstack-item:hover .pstack-cover img { filter: grayscale(0%); transform: scale(1.04); }
+        /* Reveal panel — appears where cover used to be */
+        .pstack-reveal { position: absolute; left: 180px; display: flex; align-items: center; gap: 24px; opacity: 0; transform: translateX(-10px); transition: opacity 0.5s 0.1s, transform 0.5s 0.1s; pointer-events: none; white-space: nowrap; }
+        .pstack-item:hover .pstack-reveal { opacity: 1; transform: translateX(0); pointer-events: all; }
+        .pstack-reveal-line { width: 1px; height: 50px; background: linear-gradient(to bottom, transparent, rgba(198,105,234,0.6), transparent); flex-shrink: 0; }
+        .pstack-reveal-content { display: flex; flex-direction: column; gap: 6px; }
+        .pstack-reveal-title { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: #fff; text-decoration: none; letter-spacing: -0.5px; transition: color 0.3s; cursor: none; }
+        .pstack-reveal-title:hover { color: var(--plum); }
+        .pstack-reveal-meta { font-family: var(--font-body); font-size: 0.72rem; color: var(--mauve); letter-spacing: 1px; opacity: 0.8; }
+        .pstack-reveal-cta { font-family: var(--font-body); font-size: 0.65rem; letter-spacing: 3px; text-transform: uppercase; color: #444; margin-top: 4px; transition: color 0.3s; }
+        .pstack-item:hover .pstack-reveal-cta { color: var(--plum); }
+
+        /* --- TikTok Block --- */
+        .tiktok-block { width: 100%; padding: 0 10vw; }
+        .tiktok-divider { width: 1px; height: 120px; background: linear-gradient(to bottom, transparent, rgba(198,105,234,0.3), transparent); margin: 0 auto 100px; }
+        .tiktok-line { display: flex; align-items: baseline; gap: 30px; margin-bottom: 60px; overflow: hidden; }
+        .tiktok-line-num { font-family: var(--font-display); font-size: clamp(1rem, 2vw, 1.4rem); color: var(--mauve); letter-spacing: 3px; opacity: 0.6; flex-shrink: 0; width: 40px; }
+        .tiktok-line-text { font-family: var(--font-display); font-size: clamp(2rem, 4.5vw, 4.5rem); font-weight: 700; letter-spacing: -2px; line-height: 1; color: #fff; }
+        .tiktok-line-text em { font-style: normal; color: var(--mauve); }
+        /* Layout: graph LEFT, copy+stats RIGHT */
+        .tiktok-body { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; margin-top: 100px; align-items: start; }
+        .tiktok-graph-col { position: relative; }
+        .tiktok-graph-label { font-family: var(--font-body); font-size: 0.7rem; letter-spacing: 3px; color: #555; text-transform: uppercase; margin-bottom: 20px; }
+        .tiktok-graph-svg { width: 100%; height: 200px; overflow: visible; }
+        .tiktok-graph-path { fill: none; stroke: var(--mauve); stroke-width: 2; stroke-dasharray: 600; stroke-dashoffset: 600; filter: drop-shadow(0 0 6px rgba(198,105,234,0.6)); }
+        .tiktok-graph-area { fill: url(#graphGrad); opacity: 0.15; stroke: none; clip-path: inset(0); }
+        .tiktok-graph-dot { fill: var(--mauve); filter: drop-shadow(0 0 4px rgba(198,105,234,0.8)); }
+        .tiktok-right-col { display: flex; flex-direction: column; gap: 50px; }
+        .tiktok-copy p { font-family: var(--font-body); color: #666; font-size: 1.05rem; line-height: 1.9; margin-bottom: 24px; }
+        .tiktok-copy .highlight { color: var(--plum); font-weight: 600; }
+        .tiktok-stats { display: flex; flex-direction: column; gap: 40px; }
+        .tiktok-stat-item { border-left: 1px solid rgba(198,105,234,0.2); padding-left: 30px; }
+        .tiktok-stat-num { font-family: var(--font-display); font-size: 3.5rem; font-weight: 800; letter-spacing: -2px; line-height: 1; color: #fff; }
+        .tiktok-stat-label { font-family: var(--font-body); font-size: 0.75rem; letter-spacing: 3px; color: #555; text-transform: uppercase; margin-top: 8px; }
+
+        @media (max-width: 768px) {
+            .mission-headline { font-size: 2rem; }
+            .playlist-cards-row { overflow-x: scroll; padding: 0 5vw; }
+            .tiktok-body { grid-template-columns: 1fr; gap: 50px; }
+            .tiktok-line-text { font-size: 2.2rem; }
+            .mission-section { padding: 100px 0; }
+        }
+        .artist-card { min-width: 30vw; height: 70vh; position: relative; border: 1px solid #1a1a1a; overflow: hidden; transition: border-color 0.4s; cursor: none; }
+        .artist-img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%) brightness(0.8); transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1); }
+        .artist-overlay { position: absolute; bottom: 0; left: 0; width: 100%; padding: 30px; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, transparent 100%); transform: translateY(100%); transition: transform 0.6s cubic-bezier(0.2, 1, 0.3, 1); display: flex; flex-direction: column; gap: 10px; }
+        .artist-desc { max-height: 0; opacity: 0; overflow: hidden; font-size: 0.9rem; color: #ccc; line-height: 1.5; transform: translateY(10px); transition: all 0.6s cubic-bezier(0.2, 1, 0.3, 1); }
+        .artist-card:hover { border-color: transparent; }
+        .artist-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent); transform: skewX(-20deg); transition: none; z-index: 10; pointer-events: none; }
+        .artist-card:hover .artist-img { filter: grayscale(0%); transform: scale(1.1); }
+        .artist-card:hover .artist-overlay { transform: translateY(0); }
+        .artist-card:hover .artist-desc { max-height: 150px; opacity: 1; transform: translateY(0); margin-top: 5px; }
+        .artist-card:hover::before { animation: shinySweep 0.8s ease-out; }
+
+        /* --- VISION --- */
+        .vision-section { padding: calc(45vh + 80px) 80px; background: #000000; display: flex; align-items: center; justify-content: center; min-height: 80vh; position: relative; z-index: 2; overflow: hidden; }
+        #vision-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.6; }
+        .pyramid-wrapper { width: 150px; height: 150px; position: absolute; left: 5%; top: 20%; perspective: 800px; z-index: 1; }
+        .pyramid { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; animation: spinPyramid 12s linear infinite; }
+        .pyramid-face { position: absolute; width: 100px; height: 100px; background: linear-gradient(to bottom, rgba(165, 242, 243, 0.1), transparent); border: 1px solid rgba(255,255,255,0.15); transform-origin: bottom center; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+        .pf-1 { transform: translateZ(50px) rotateX(30deg); } .pf-2 { transform: rotateY(90deg) translateZ(50px) rotateX(30deg); } .pf-3 { transform: rotateY(180deg) translateZ(50px) rotateX(30deg); } .pf-4 { transform: rotateY(270deg) translateZ(50px) rotateX(30deg); }
+        .pyramid-glow { position: absolute; left: 5%; top: 20%; width: 150px; height: 150px; transform: translate(0, 50px); background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); filter: blur(30px); opacity: 0.5; z-index: 0; animation: subtleBreathe 8s infinite ease-in-out; }
+        .vision-container { display: grid; grid-template-columns: 1fr 1.5fr; gap: 80px; max-width: 1200px; margin: 0 auto; width: 100%; align-items: center; position: relative; z-index: 2; }
+        .vision-graphic { position: relative; width: 100%; max-width: 300px; height: 300px; display: flex; justify-content: center; align-items: center; }
+        .scrolly-reveal { opacity: 0; transform: translateY(100px) scale(0.9); filter: blur(10px); }
+        .kinetic-ring-svg { width: 100%; height: 100%; animation: spinSlow 20s linear infinite; position: relative; z-index: 2; }
+        
+        .kinetic-text { font-family: var(--font-body); font-size: 6px; fill: #666; letter-spacing: 2px; text-transform: uppercase; }
+        
+        /* INTEGRACIÓN DEL LOGO SMOKE (Más grande y por debajo del texto) */
+        .vision-logo-center {
+            position: absolute;
+            width: 180px; /* MÁS GRANDE */
+            height: auto;
+            z-index: 0; /* POR DEBAJO DEL TEXTO */
+            filter: drop-shadow(0 0 25px rgba(165, 242, 243, 0.5)); /* Glow más intenso */
+            opacity: 0.8;
+            mix-blend-mode: screen;
+        }
+
+        .vision-content { padding-left: 40px; border-left: 1px solid #333; position: relative; }
+        .vision-orbit { position: absolute; width: 600px; height: 600px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 50%; top: -20%; left: -20%; animation: spin 40s linear infinite; pointer-events: none; }
+        .vision-label { font-size: 0.9rem; letter-spacing: 4px; color: var(--hologram); margin-bottom: 20px; font-weight: bold; text-shadow: 0 0 15px rgba(165, 242, 243, 0.3); }
+        .vision-title { font-family: var(--font-body); font-weight: 300; font-size: 2.2rem; margin-bottom: 30px; line-height: 1.2; text-transform: uppercase; }
+        .vision-text { color: #aaa; font-size: 1rem; line-height: 1.8; margin-bottom: 20px; max-width: 700px; }
+        .vision-highlight { color: #fff; font-weight: 600; }
+        .vision-modules { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
+        .module-item { display: flex; align-items: center; gap: 10px; color: #aaa; font-size: 0.8rem; letter-spacing: 1px; }
+        .module-icon { width: 6px; height: 6px; background: #fff; border-radius: 50%; }
+
+        /* --- IMPACT --- */
+        .achievements-section { padding: 120px 80px; background: transparent; position: relative; z-index: 2; perspective: 1000px; }
+        .impact-title { font-family: var(--font-body); font-weight: 300; font-size: 3rem; margin-bottom: 60px; text-align: center; letter-spacing: 5px; opacity: 0.9; text-shadow: 0 0 15px rgba(255,255,255,0.3); }
+        .floating-shape { position: absolute; z-index: 0; pointer-events: none; opacity: 0.4; }
+        .shape-icosahedron { top: 5%; left: 5%; width: 80px; height: 80px; border: 1px solid rgba(255,255,255,0.2); transform-style: preserve-3d; animation: floatRotate 25s infinite linear; }
+        .shape-helix { right: 5%; top: 20%; height: 400px; width: 2px; background: repeating-linear-gradient(to bottom, #fff 0px, transparent 5px, #fff 10px); opacity: 0.2; animation: scanline 5s infinite linear; }
+        .shape-cube-float { bottom: 10%; left: 20%; width: 40px; height: 40px; border: 1px solid var(--hologram); transform: rotate(45deg); animation: float 8s infinite ease-in-out; }
+        .bento-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 280px 280px; gap: 25px; max-width: 1400px; margin: 0 auto; position: relative; z-index: 2; }
+        .bento-card { background: rgba(10, 10, 10, 0.7); border: 1px solid rgba(255, 255, 255, 0.15); padding: 30px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease; cursor: none; opacity: 1; backdrop-filter: blur(5px); }
+        .bento-card::after { content: '+'; position: absolute; top: 10px; right: 10px; color: rgba(255,255,255,0.3); font-family: monospace; z-index: 5; }
+        .bento-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent); transform: skewX(-20deg); transition: none; z-index: 10; pointer-events: none; }
+        .bento-card:hover { border-color: rgba(255, 255, 255, 0.6); box-shadow: 0 0 30px rgba(255, 255, 255, 0.1); transform: translateY(-3px); }
+        .bento-card:hover::before { animation: shinySweep 0.8s ease-out; }
+        .card-tiktok { grid-column: 1 / 2; grid-row: 1 / 3; }
+        .tt-anim-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 255, 255, 0.05) 2px, rgba(255, 255, 255, 0.05) 4px); animation: scanline 3s linear infinite; pointer-events: none; }
+        .tt-graph-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 60%; opacity: 0.3; z-index: 1; }
+        .tt-graph-line { fill: none; stroke: var(--hologram); stroke-width: 3; stroke-dasharray: 1000; stroke-dashoffset: 1000; }
+        .tt-number { font-family: var(--font-display); font-size: 6rem; line-height: 1; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.5); z-index: 2; margin-top: 20px; }
+        .tt-label { font-size: 1rem; letter-spacing: 4px; color: #fff; z-index: 2; margin-top: 10px; font-weight: bold; border: 1px solid #fff; padding: 5px 10px; display: inline-block; width: fit-content; }
+        .card-gold { grid-column: 2 / 3; grid-row: 1 / 2; align-items: center; justify-content: center; }
+        .gold-disc { width: 120px; height: 120px; background: conic-gradient(#D4AF37, #fff, #D4AF37, #8A6E2F, #D4AF37); border-radius: 50%; border: 4px solid #111; box-shadow: 0 0 30px rgba(255, 255, 255, 0.2); position: relative; animation: spin 6s linear infinite; filter: grayscale(0.2); }
+        .gold-disc::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 30px; height: 30px; background: #000; border-radius: 50%; border: 1px solid #fff; }
+        .card-billboard { grid-column: 3 / 4; grid-row: 1 / 2; align-items: center; justify-content: center; perspective: 500px; }
+        .holo-planet { width: 120px; height: 120px; position: relative; transform-style: preserve-3d; animation: rotatePlanet 10s linear infinite; }
+        .planet-ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 1px solid rgba(255,255,255,0.4); border-radius: 50%; }
+        .planet-ring:nth-child(1) { transform: rotateY(0deg); } .planet-ring:nth-child(2) { transform: rotateY(60deg); } .planet-ring:nth-child(3) { transform: rotateY(120deg); } .planet-ring:nth-child(4) { transform: rotateX(90deg); border-color: rgba(255,255,255,0.8); }
+        .planet-label { margin-top: 20px; font-size: 0.8rem; letter-spacing: 2px; text-align: center; }
+        .card-chart { grid-column: 2 / 4; grid-row: 2 / 3; }
+        .chart-svg { width: 100%; height: 100%; position: absolute; bottom: 0; left: 0; opacity: 0.8; }
+        .chart-line { fill: none; stroke: #fff; stroke-width: 2; filter: drop-shadow(0 0 5px #fff); stroke-dasharray: 1000; stroke-dashoffset: 1000; }
+        .chart-dots { position: absolute; top: 20px; right: 20px; display: flex; gap: 5px; }
+        .dot { width: 4px; height: 4px; background: #555; border-radius: 50%; } .dot.active { background: #fff; box-shadow: 0 0 5px #fff; }
+        .listeners-label { position: absolute; top: 30px; left: 30px; font-size: 0.9rem; letter-spacing: 2px; color: #ccc; z-index: 5; font-weight: bold; }
+
+        /* --- SUBMIT --- */
+        .submit-section { padding: 150px 80px; background: #010101; border-top: 1px solid #111; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; }
+        .submit-title { font-family: var(--font-body); font-weight: 300; font-size: 2rem; margin-bottom: 60px; letter-spacing: 3px; color: #fff; }
+        .submit-form { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 40px; }
+        .input-group { position: relative; width: 100%; }
+        .cyber-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid #333; color: #fff; font-family: var(--font-body); font-size: 1.2rem; padding: 15px 0; outline: none; transition: border-color 0.3s, box-shadow 0.3s; cursor: none; }
+        .cyber-input:focus { border-bottom-color: #fff; box-shadow: 0 10px 20px -10px rgba(255, 255, 255, 0.2); }
+        .cyber-input::placeholder { color: #444; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; }
+        .submit-btn { margin-top: 20px; padding: 20px 40px; background: #111; color: #fff; border: none; font-family: var(--font-body); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; cursor: none; transition: all 0.3s; clip-path: polygon(0 0, 100% 0, 100% 70%, 95% 100%, 0 100%); }
+        .submit-btn:hover { background: #fff; color: #000; box-shadow: 0 0 30px rgba(255, 255, 255, 0.6); transform: scale(1.02); }
+
+        .elysium-footer { padding: 120px 80px 80px; text-align: center; background: #010101; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 5; border-top: 1px solid rgba(255,255,255,0.05); }
+        .elysium-footer-msg { font-family: var(--font-display); font-size: 4vw; line-height: 1.1; max-width: 800px; margin-bottom: 60px; color: #fff; opacity: 0.9; text-transform: none; letter-spacing: -2px; }
+        .footer-links { display: flex; gap: 40px; margin-bottom: 60px; align-items: center; }
+        .elysium-footer .social-icon { width: 28px; height: 28px; opacity: 0.7; transition: opacity 0.3s, transform 0.3s; }
+        .elysium-footer .social-link:hover .social-icon { opacity: 1; transform: scale(1.2); }
+        .footer-links a { color: #888; text-decoration: none; font-size: 0.8rem; letter-spacing: 4px; transition: color 0.3s; cursor: none; text-transform: uppercase; font-family: var(--font-body); }
+        .footer-links a:hover { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        .footer-copyright { color: #333; font-size: 0.7rem; letter-spacing: 2px; font-family: var(--font-body); }
+
+        @keyframes breatheStar { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 25px rgba(255,255,255,0.8)); } }
+        @keyframes shinySweep { 0% { left: -100%; } 100% { left: 200%; } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes spinSlow { 100% { transform: rotate(360deg); } }
+        @keyframes spinPyramid { 0% { transform: rotateY(0deg) rotateX(20deg); } 100% { transform: rotateY(360deg) rotateX(20deg); } }
+        @keyframes scanline { 0% { background-position: 0 0; } 100% { background-position: 0 100px; } }
+        @keyframes rotatePlanet { 0% { transform: rotateY(0deg) rotateX(20deg); } 100% { transform: rotateY(360deg) rotateX(20deg); } }
+        @keyframes floatRotate { 0% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(180deg); } 100% { transform: translateY(0) rotate(360deg); } }
+        @keyframes float { 0% { transform: translateY(0) rotateX(70deg); } 50% { transform: translateY(15px) rotateX(70deg); } 100% { transform: translateY(0) rotateX(70deg); } }
+        @keyframes subtleBreathe { 0%, 100% { opacity: 0.3; transform: translate(0, 50px) scale(0.8); } 50% { opacity: 0.6; transform: translate(0, 50px) scale(1.2); } }
+
+        /* --- MOBILE --- */
+        @media (max-width: 768px) {
+            .cursor-dot, .cursor-outline, .scroll-progress-track, .floating-shape, .roster-decor, .pyramid-glow { display: none !important; }
+            body { cursor: auto; }
+            header { padding: 20px; flex-direction: column; gap: 15px; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); }
+            /* MOBILE NAV GAP INCREASED */
+            nav { gap: 40px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+            nav a { margin: 0; font-size: 0.65rem; }
+            .hero-title { font-size: 10vw; letter-spacing: -1px; }
+            .est-text { margin-right: 0; margin-top: 0; align-self: center; }
+            .title-container { align-items: center; }
+            .parallax-wrapper { transform: none !important; }
+            .section-releases { padding: 80px 0; height: auto; min-height: 80vh; }
+            .stack-wrapper { transform: scale(0.65); margin-bottom: 20px; }
+            .tape-container { height: 300px; }
+            .tape-item { width: 220px; height: 220px; }
+            .tape-nav-arrow { opacity: 1; pointer-events: all; }
+            .roster-section { height: auto; display: block; padding: 50px 0; }
+            .roster-container { display: flex; flex-direction: row; padding: 0 20px; gap: 15px; overflow-x: scroll; scroll-snap-type: x mandatory; width: 100%; transform: none !important; }
+            .roster-container > div:first-child { display: none; }
+            .artist-card { min-width: 85vw; height: 60vh; scroll-snap-align: center; border: 1px solid #333; }
+            .vision-section { padding: 60px 20px; }
+            .vision-container { grid-template-columns: 1fr; gap: 40px; }
+            .vision-graphic { width: 200px; height: 200px; margin: 0 auto; }
+            .vision-content { padding-left: 0; border-left: none; border-top: 1px solid #333; padding-top: 30px; }
+            .vision-title { font-size: 1.8rem; }
+            .pyramid-wrapper { display: none; }
+            .achievements-section { padding: 60px 20px; }
+            .impact-title { font-size: 2rem; }
+            .bento-grid { display: flex; flex-direction: column; gap: 20px; }
+            .bento-card { height: 250px; }
+            .submit-section { padding: 80px 20px; }
+            .submit-title { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="click-sound" src="click.wav"></audio>
+
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+    <div class="scroll-progress-track"><div class="scroll-progress-bar"></div></div>
+    
+    <canvas id="visual-engine"></canvas>
+
+    <header>
+        <div class="logo-mini">LUMINA</div>
+        <nav>
+            <a href="#releases">Releases</a>
+            <a href="#roster">Artists</a>
+            <a href="#vision">Vision</a>
+            <a href="#stats">Impact</a>
+            <a href="#submit">Submit</a>
+        </nav>
+    </header>
+
+    <section class="hero" id="hero-section">
+        <div class="parallax-wrapper" id="hero-content">
+            <div class="title-container">
+                <div class="title-row">
+                    <h1 class="hero-title">LUMINA</h1>
+                    <svg class="star-svg" viewBox="0 0 24 24"><path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" /></svg>
+                    <h1 class="hero-title">RECS.</h1>
+                </div>
+                <div class="est-text">EST. 2026</div>
+            </div>
+            
+            <div class="social-row">
+                <a href="#" class="social-link link-spotify"><svg class="social-icon" viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S16.6 0 12 0zm5.5 17.3c-.2.3-.5.4-.8.2-2.2-1.3-5-1.6-8.3-.9-.3.1-.6-.1-.7-.4-.1-.3.1-.6.4-.7 3.6-.8 6.7-.5 9.2 1 .3.2.4.5.2.8zm1.1-2.4c-.3.4-.8.5-1.2.3-2.7-1.7-6.9-2.2-10.1-1.2-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.6-1.1 8.3-.6 11.5 1.3.4.2.5.7.3 1.1zm.1-2.6C16.1 10.6 9.4 10.4 5.5 11.6c-.6.2-1.2-.2-1.4-.8-.2-.6.2-1.2.8-1.4 4.5-1.4 11.9-1.1 15.6 1.1.5.3.7 1 .4 1.5-.2.6-.8.8-1.3.5z"/></svg></a>
+                <a href="#" class="social-link link-insta"><svg class="social-icon" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>
+                <a href="#" class="social-link link-tiktok"><svg class="social-icon" viewBox="0 0 24 24"><path d="M19.6 6.2c-2.3 0-4.4-.8-6-2.1v11.3c0 3.2-2.6 5.8-5.8 5.8-3.2 0-5.8-2.6-5.8-5.8 0-3.2 2.6-5.8 5.8-5.8.5 0 .9.1 1.4.2v3.3c-.2-.1-.5-.2-.9-.2-1.4 0-2.5 1.1-2.5 2.5s1.1 2.5 2.5 2.5c1.4 0 2.5-1.1 2.5-2.5V0h3.2c0 2.5 2 4.5 4.5 4.5v1.7h-1.4z"/></svg></a>
+            </div>
+        </div>
+        <div class="scroll-unlock">
+            <div class="scroll-text">Scroll to Unlock</div>
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <div class="void-spacer"></div>
+
+    <section class="section-releases" id="releases">
+        <div class="stack-wrapper" id="stack-trigger">
+            <div class="card-wrap w-left"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1619983081563-430f63602796?q=80&w=800&auto=format&fit=crop" class="vinyl-cover"></a></div>
+            <div class="card-wrap w-right"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1621360841012-3f8224be6727?q=80&w=800&auto=format&fit=crop" class="vinyl-cover"></a></div>
+            <div class="card-wrap w-center" style="z-index: 5;"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=800&auto=format&fit=crop" class="vinyl-cover"></a></div>
+        </div>
+        <div class="drop-info" id="stack-info">
+            <h2 style="font-family: var(--font-display); font-size: 3rem;">LATEST RELEASES</h2>
+            <p style="letter-spacing: 4px; color: #888; margin-top: 10px;">CLICK TO EXPLORE ARCHIVE</p>
+        </div>
+        <div class="tape-container" id="tape-view">
+            <div class="tape-track" id="tape-track">
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1619983081563-430f63602796?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1621360841012-3f8224be6727?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1484589065579-248aad0d8b13?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1514525253440-b393452e8d26?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1619983081593-e2ba5b543e60?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1605218427368-84227914a29a?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1458560871784-56d23406c091?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1459749411177-334811adbced?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1471478331149-c72f17e33c73?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1516280440614-6697288d5d38?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1619983081563-430f63602796?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1621360841012-3f8224be6727?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1484589065579-248aad0d8b13?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1514525253440-b393452e8d26?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1619983081593-e2ba5b543e60?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1605218427368-84227914a29a?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1458560871784-56d23406c091?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1459749411177-334811adbced?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1471478331149-c72f17e33c73?q=80&w=600"></a></div>
+                <div class="tape-item"><a href="javascript:void(0)"><img src="https://images.unsplash.com/photo-1516280440614-6697288d5d38?q=80&w=600"></a></div>
+            </div>
+            <div class="tape-nav-arrow" id="tape-arrow">
+                <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+            </div>
+        </div>
+    </section>
+
+    <div class="void-spacer"></div>
+
+    <section class="roster-section" id="roster">
+        <div class="roster-container">
+            <div style="min-width: 20vw; color: #444; font-family: var(--font-display); font-size: 3rem; writing-mode: vertical-rl; transform: rotate(180deg);">THE ARCHITECTS</div>
+            <div class="roster-decor">
+                <svg class="roster-star-svg" viewBox="0 0 24 24"><path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" /></svg>
+            </div>
+            <div class="artist-card"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=800&auto=format&fit=crop" class="artist-img"><div class="artist-overlay"><h3>SYNTHIA</h3><p>Cyber-Pop</p><div class="artist-desc">She thinks buying vintage hardware synthesizers is a personality trait. Honestly, she might be right.</div></div></div>
+            <div class="artist-card"><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=800&auto=format&fit=crop" class="artist-img"><div class="artist-overlay"><h3>KRYPTO</h3><p>Techno</p><div class="artist-desc">Refuses to play anywhere with windows. Says the sun ruins the BPM.</div></div></div>
+            <div class="artist-card"><img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=800&auto=format&fit=crop" class="artist-img"><div class="artist-overlay"><h3>AURA</h3><p>Ambient</p><div class="artist-desc">Sent us a 45-minute demo of pure wind noises. We signed her immediately.</div></div></div>
+        </div>
+    </section>
+
+    <!-- ROSTER → VISION: roster's margin-bottom = 30vh. Vision starts immediately after with padding covering the rest -->
+
+    <section class="vision-section" id="vision">
+        <canvas id="vision-canvas"></canvas>
+        <div class="pyramid-wrapper">
+            <div class="pyramid-glow"></div>
+            <div class="pyramid"><div class="pyramid-face pf-1"></div><div class="pyramid-face pf-2"></div><div class="pyramid-face pf-3"></div><div class="pyramid-face pf-4"></div></div>
+        </div>
+        <div class="vision-container">
+            <div class="vision-graphic">
+                <img src="image_1.png" class="vision-logo-center" alt="Lumina Smoke Core">
+                <svg class="kinetic-ring-svg" viewBox="0 0 100 100"><path id="textPath" d="M 50, 50 m -37, 0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0" fill="transparent" /><text class="kinetic-text"><textPath href="#textPath" startOffset="0%">INDIE LABEL • ARTIST DRIVEN • FUTURE SOUND • </textPath></text></svg>
+                <div class="vision-orbit"></div>
+            </div>
+            <div class="vision-content scrolly-reveal">
+                <div class="vision-label">HONESTLY?</div>
+                <h2 class="vision-title" style="font-size: 2.5rem; letter-spacing: -1px; margin-bottom: 40px; text-transform: none;">We got tired of waiting for someone else to build a decent label. So we did it ourselves.</h2>
+                <p class="vision-text">No one really knows where the industry is heading. But we have a pretty obsessive ear for what sounds right today, and the patience to push it until it sticks.</p>
+                <p class="vision-text">We are not miraculous (although we are most of the times). But our focus is to <span class="vision-highlight">elevate your growth</span> without the typical corporate BS — honestly building a fan foundation while keeping you sane.</p>
+                <div class="vision-modules" style="margin-top: 50px;">
+                    <div class="module-item"><div class="module-icon"></div>ACTUALLY CARING ABOUT THE ART</div>
+                    <div class="module-item"><div class="module-icon"></div>SOME EXCEL SPREADSHEETS (SADLY)</div>
+                    <div class="module-item"><div class="module-icon"></div>VIRAL TIKTOK STRATEGY</div>
+                    <div class="module-item"><div class="module-icon"></div>NO 360 DEALS. EVER.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MISSION starts immediately: its padding-top covers the void above -->
+    <!-- =============================================
+         MISSION SECTION — What We Actually Do
+    ============================================= -->
+    <section class="mission-section" id="mission">
+
+        <!-- INTRO -->
+        <div class="mission-intro">
+            <div class="mission-eyebrow">01 — What we do</div>
+            <h2 class="mission-headline">We build careers.<br><em style="color:rgba(255,255,255,0.3)">Not just releases.</em></h2>
+            <p class="mission-subline">Two things move streams before any ad spend: the right playlist, and the right moment. We obsess over both. Here&#x2019;s how that looks in practice.</p>
+        </div>
+
+        <!-- PLAYLIST BLOCK -->
+        <div class="playlist-block" id="playlist-block">
+            <div class="playlist-block-inner">
+                <!-- Left: label col -->
+                <div class="playlist-label-col" id="playlist-label-col">
+                    <div class="playlist-number">01</div>
+                    <div class="playlist-label-text">
+                        <h3>Playlist Placement.<br>The unsexy backbone.</h3>
+                        <p>Our playlists generate a consistent stream of plays before we spend a single euro on promotion. Not ghost playlists with 12 followers. They actually convert.</p>
+                        <div class="playlist-stat">&uarr; Avg. 40K streams per placement &nbsp;&middot;&nbsp; Growing monthly</div>
+                    </div>
+                </div>
+                <!-- Right: stacked covers -->
+                <div class="pstack-list" id="pstack-list">
+                    <div class="pstack-item">
+                        <div class="pstack-cover"><img src="https://images.unsplash.com/photo-1614854262318-831574f15f1f?w=600&q=80" alt="Late Night Frequencies"></div>
+                        <div class="pstack-reveal">
+                            <div class="pstack-reveal-line"></div>
+                            <div class="pstack-reveal-content">
+                                <a href="#" class="pstack-reveal-title">Late Night Frequencies</a>
+                                <span class="pstack-reveal-meta">Indie Electronic &middot; 8.2K followers</span>
+                                <span class="pstack-reveal-cta">Open playlist &rarr;</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pstack-item">
+                        <div class="pstack-cover"><img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&q=80" alt="Dark Ambient Journeys"></div>
+                        <div class="pstack-reveal">
+                            <div class="pstack-reveal-line"></div>
+                            <div class="pstack-reveal-content">
+                                <a href="#" class="pstack-reveal-title">Dark Ambient Journeys</a>
+                                <span class="pstack-reveal-meta">Ambient &middot; Chill &middot; 14.7K followers</span>
+                                <span class="pstack-reveal-cta">Open playlist &rarr;</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pstack-item">
+                        <div class="pstack-cover"><img src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=600&q=80" alt="New Wave Underground"></div>
+                        <div class="pstack-reveal">
+                            <div class="pstack-reveal-line"></div>
+                            <div class="pstack-reveal-content">
+                                <a href="#" class="pstack-reveal-title">New Wave Underground</a>
+                                <span class="pstack-reveal-meta">Alt Pop &middot; Dark &middot; 21K followers</span>
+                                <span class="pstack-reveal-cta">Open playlist &rarr;</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pstack-item">
+                        <div class="pstack-cover"><img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&q=80" alt="Midnight Signals"></div>
+                        <div class="pstack-reveal">
+                            <div class="pstack-reveal-line"></div>
+                            <div class="pstack-reveal-content">
+                                <a href="#" class="pstack-reveal-title">Midnight Signals</a>
+                                <span class="pstack-reveal-meta">Synth &middot; Electronic &middot; 9.5K followers</span>
+                                <span class="pstack-reveal-cta">Open playlist &rarr;</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pstack-item">
+                        <div class="pstack-cover"><img src="https://images.unsplash.com/photo-1484589065579-248aad0d8b13?w=600&q=80" alt="The Vault"></div>
+                        <div class="pstack-reveal">
+                            <div class="pstack-reveal-line"></div>
+                            <div class="pstack-reveal-content">
+                                <a href="#" class="pstack-reveal-title">The Vault</a>
+                                <span class="pstack-reveal-meta">Hidden Gems &middot; 31K followers</span>
+                                <span class="pstack-reveal-cta">Open playlist &rarr;</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TIKTOK BLOCK -->
+        <div class="tiktok-block" id="tiktok-block">
+            <div class="tiktok-divider"></div>
+
+            <div class="tiktok-line" id="tt-line-1">
+                <span class="tiktok-line-num">02</span>
+                <span class="tiktok-line-text">TikTok is not<br><em>a lottery.</em></span>
+            </div>
+            <div class="tiktok-line" id="tt-line-2">
+                <span class="tiktok-line-num"></span>
+                <span class="tiktok-line-text" style="font-size: clamp(1.2rem, 2.2vw, 2.2rem); color: rgba(255,255,255,0.4); letter-spacing: -0.5px;">It&#x2019;s a system. And we&#x2019;ve cracked most of it.</span>
+            </div>
+
+            <!-- layout: graph LEFT, text RIGHT -->
+            <div class="tiktok-body">
+                <!-- LEFT: SVG line graph -->
+                <div class="tiktok-graph-col" id="tt-graph-col">
+                    <div class="tiktok-graph-label">Views / Campaign Velocity</div>
+                    <svg class="tiktok-graph-svg" viewBox="0 0 300 160" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="graphGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#C669EA" stop-opacity="0.4"/>
+                                <stop offset="100%" stop-color="#C669EA" stop-opacity="0"/>
+                            </linearGradient>
+                        </defs>
+                        <path class="tiktok-graph-area" d="M0,160 C30,140 60,130 80,100 C110,60 130,40 160,20 C190,5 230,10 300,0 L300,160 Z"/>
+                        <path class="tiktok-graph-path" id="tt-graph-path" d="M0,160 C30,140 60,130 80,100 C110,60 130,40 160,20 C190,5 230,10 300,0"/>
+                        <circle class="tiktok-graph-dot" cx="300" cy="0" r="4"/>
+                        <circle class="tiktok-graph-dot" cx="160" cy="20" r="3" opacity="0.6"/>
+                        <circle class="tiktok-graph-dot" cx="80" cy="100" r="3" opacity="0.4"/>
+                    </svg>
+                    <div style="display:flex; gap:30px; margin-top:20px;">
+                        <div class="tiktok-stat-item" style="padding-left:20px;">
+                            <div class="tiktok-stat-num" style="font-size:2.2rem;">+1B</div>
+                            <div class="tiktok-stat-label">Views generated</div>
+                        </div>
+                        <div class="tiktok-stat-item" style="padding-left:20px;">
+                            <div class="tiktok-stat-num" style="font-size:2.2rem;">3 days</div>
+                            <div class="tiktok-stat-label">To first viral peak</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- RIGHT: copy + zero stat -->
+                <div class="tiktok-right-col" id="tt-copy">
+                    <div class="tiktok-copy">
+                        <p>Most labels look at TikTok the way your parents look at TikTok &#x2014; confused, slightly scared, and hoping it goes away. We&#x2019;ve been living in it long enough to know <span class="highlight">exactly what triggers the algorithm</span> and what just gets 200 views and disappears into the void.</p>
+                        <p>We don&#x2019;t do generic content schedules. We reverse-engineer the <span class="highlight">trend window</span>, study hook psychology, and build campaigns around your specific sound &#x2014; not a template copied from someone else&#x2019;s success.</p>
+                        <p>Zero. Ghosting. If something isn&#x2019;t working, we tell you the same day. Not in the quarterly review meeting that definitely wasn&#x2019;t getting cancelled.</p>
+                    </div>
+                    <div class="tiktok-stat-item">
+                        <div class="tiktok-stat-num">0</div>
+                        <div class="tiktok-stat-label">Unanswered messages. (We counted.)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <div class="void-spacer"></div>
+
+    <section class="achievements-section" id="stats">
+        <div class="floating-shape shape-icosahedron"></div><div class="floating-shape shape-helix"></div><div class="floating-shape shape-cube-float"></div>
+        <h2 class="impact-title scrolly-reveal">GLOBAL IMPACT</h2>
+        <div class="bento-grid">
+            <div class="bento-card card-tiktok">
+                <div class="tt-anim-bg"></div>
+                <svg class="tt-graph-container" viewBox="0 0 200 100" preserveAspectRatio="none"><path class="tt-graph-line" d="M0,100 C50,100 80,80 120,40 C150,10 180,5 200,0" /></svg>
+                <div style="z-index: 2;"><div class="tt-number" id="tiktok-counter">0</div><div class="tt-label">DAILY VIEWS ON TIKTOK</div></div><div style="z-index: 2; margin-top: auto; font-size: 0.8rem; opacity: 0.6; font-family: monospace;">STATUS: VIRAL<br>REGION: GLOBAL</div>
+            </div>
+            <div class="bento-card card-gold">
+                <div style="font-size: 0.7rem; color: var(--gold); position: absolute; top: 20px; left: 20px; letter-spacing: 2px;">RIAA CERTIFIED</div><div class="gold-disc"></div><div style="text-align: center; margin-top: 20px;"><div style="font-size: 1.2rem; font-weight: bold;">GOLD</div><div style="font-size: 0.8rem; color: #888;">"ECHOES" - KRYPTO</div></div>
+            </div>
+            <div class="bento-card card-billboard">
+                <div class="holo-planet"><div class="planet-ring"></div><div class="planet-ring"></div><div class="planet-ring"></div><div class="planet-ring"></div></div><div class="planet-label">GLOBAL REACH</div>
+            </div>
+            <div class="bento-card card-chart">
+                <div class="listeners-label">MONTHLY LISTENERS</div><svg class="chart-svg" viewBox="0 0 300 100" preserveAspectRatio="none"><path class="chart-line" d="M0,100 C50,80 100,90 150,40 C200,0 250,50 300,10" /></svg><div style="position: absolute; bottom: 20px; right: 20px; font-size: 2.5rem; font-family: var(--font-display);">14.2M</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="void-spacer"></div>
+
+    <section class="submit-section" id="submit">
+        <h2 class="submit-title scrolly-reveal" style="font-size: 3rem; text-shadow: 0 0 20px rgba(255,255,255,0.2);">THE PORTAL</h2>
+        <form class="submit-form">
+            <div class="input-group"><input type="text" class="cyber-input" placeholder="ARTIST ALIAS" required></div>
+            <div class="input-group"><input type="email" class="cyber-input" placeholder="SECURE EMAIL" required></div>
+            <div class="input-group"><input type="url" class="cyber-input" placeholder="DEMO LINK (SC / DROPBOX)" required></div>
+            <button type="submit" class="submit-btn" id="portal-btn">SUBMIT</button>
+        </form>
+    </section>
+
+    <footer class="elysium-footer">
+        <div class="elysium-footer-msg scrolly-reveal">Still scrolling? What a gentleman (or lady).<br>Get more from us below.</div>
+        <div class="footer-links social-row scrolly-reveal">
+            <a href="#" class="social-link"><svg class="social-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z"/></svg></a>
+            <a href="#" class="social-link"><svg class="social-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>
+            <a href="#" class="social-link"><svg class="social-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M19.6 6.2c-2.3 0-4.4-.8-6-2.1v11.3c0 3.2-2.6 5.8-5.8 5.8-3.2 0-5.8-2.6-5.8-5.8 0-3.2 2.6-5.8 5.8-5.8.5 0 .9.1 1.4.2v3.3c-.2-.1-.5-.2-.9-.2-1.4 0-2.5 1.1-2.5 2.5s1.1 2.5 2.5 2.5c1.4 0 2.5-1.1 2.5-2.5V0h3.2c0 2.5 2 4.5 4.5 4.5v1.7h-1.4z"/></svg></a>
+            <a href="#" class="social-link"><svg class="social-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S16.6 0 12 0zm5.5 17.3c-.2.3-.5.4-.8.2-2.2-1.3-5-1.6-8.3-.9-.3.1-.6-.1-.7-.4-.1-.3.1-.6.4-.7 3.6-.8 6.7-.5 9.2 1 .3.2.4.5.2.8zm1.1-2.4c-.3.4-.8.5-1.2.3-2.7-1.7-6.9-2.2-10.1-1.2-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.6-1.1 8.3-.6 11.5 1.3.4.2.5.7.3 1.1zm.1-2.6C16.1 10.6 9.4 10.4 5.5 11.6c-.6.2-1.2-.2-1.4-.8-.2-.6.2-1.2.8-1.4 4.5-1.4 11.9-1.1 15.6 1.1.5.3.7 1 .4 1.5-.2.6-.8.8-1.3.5z"/></svg></a>
+        </div>
+        <div class="footer-copyright">LUMINA RECS © 2026</div>
+    </footer>
+
+    <script>
+        const clickSound = document.getElementById('click-sound'); clickSound.volume = 0.3; document.addEventListener('click', () => { clickSound.currentTime = 0; clickSound.play().catch(e => {}); });
+        const cursorDot = document.querySelector('.cursor-dot'); const cursorOutline = document.querySelector('.cursor-outline'); let mouseX = -100, mouseY = -100, outlineX = -100, outlineY = -100;
+        window.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; cursorDot.style.left = `${mouseX}px`; cursorDot.style.top = `${mouseY}px`; });
+        function animateCursor() { let distX = mouseX - outlineX; let distY = mouseY - outlineY; outlineX += distX * 0.15; outlineY += distY * 0.15; cursorOutline.style.left = `${outlineX}px`; cursorOutline.style.top = `${outlineY}px`; requestAnimationFrame(animateCursor); } animateCursor();
+
+        const canvas = document.getElementById('visual-engine'); const ctx = canvas.getContext('2d'); let width, height, scrollSpeed = 0, lastScrollY = window.scrollY; let particles = [], worms = [], gridPoints = []; const gridSize = 50;
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; initGrid(); initParticles(); initWorms(); } window.addEventListener('resize', resize); window.addEventListener('scroll', () => { scrollSpeed = (window.scrollY - lastScrollY); lastScrollY = window.scrollY; });
+        class GridPoint { constructor(x, y) { this.x = x; this.y = y; this.ox = x; this.oy = y; } update() { let dx = mouseX - this.x; let dy = mouseY - this.y; let dist = Math.sqrt(dx*dx + dy*dy); if (dist < 200) { let force = (200 - dist) / 200; let push = force * 15; let angle = Math.atan2(dy, dx); this.x -= Math.cos(angle) * push; this.y -= Math.sin(angle) * push; } this.x += (this.ox - this.x) * 0.1; this.y += (this.oy - this.y) * 0.1; } }
+        function initGrid() { gridPoints = []; for (let y = 0; y <= height + gridSize; y += gridSize) { let row = []; for (let x = 0; x <= width + gridSize; x += gridSize) { row.push(new GridPoint(x, y)); } gridPoints.push(row); } }
+        function drawGrid() { ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1; for (let i = 0; i < gridPoints.length; i++) { for (let j = 0; j < gridPoints[i].length; j++) { let p = gridPoints[i][j]; p.update(); ctx.beginPath(); if (j < gridPoints[i].length - 1) { ctx.moveTo(p.x, p.y); ctx.lineTo(gridPoints[i][j+1].x, gridPoints[i][j+1].y); } if (i < gridPoints.length - 1) { ctx.moveTo(p.x, p.y); ctx.lineTo(gridPoints[i+1][j].x, gridPoints[i+1][j].y); } ctx.stroke(); } } }
+        class Particle { constructor() { this.x = Math.random() * width; this.y = Math.random() * height; this.size = Math.random() * 1.5; this.baseX = this.x; this.baseY = this.y; this.density = (Math.random() * 20) + 1; } update() { let dx = mouseX - this.x; let dy = mouseY - this.y; let dist = Math.sqrt(dx*dx + dy*dy); if (dist < 150) { let force = (150-dist)/150; this.x -= (dx/dist)*force*this.density*5; this.y -= (dy/dist)*force*this.density*5; } else { this.x -= (this.x-this.baseX)*0.05; this.y -= (this.y-this.baseY)*0.05; } } draw() { ctx.fillStyle = `rgba(255, 255, 255, ${Math.random()*0.5 + 0.1})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); } }
+        class Worm { constructor() { this.x = Math.random() * width; this.y = Math.random() * height; this.angle = Math.random() * Math.PI * 2; this.angleTarget = this.angle; this.currentSpeed = 0; this.speedBase = Math.random() * 0.5 + 0.2; this.history = []; this.maxLength = Math.random() * 100 + 100; this.thickness = width < 768 ? 2 : Math.random() * 5 + 3; } update() { this.angleTarget += (Math.random() - 0.5) * 0.1; this.angle += (this.angleTarget - this.angle) * 0.02; let targetSpeed = this.speedBase + (Math.abs(scrollSpeed) > 1 ? Math.min(4, Math.abs(scrollSpeed)*0.03) : 0); this.currentSpeed += (targetSpeed - this.currentSpeed) * 0.03; this.x += Math.cos(this.angle) * this.currentSpeed; this.y += Math.sin(this.angle) * this.currentSpeed; if (this.x < 0) this.x = width; if (this.x > width) this.x = 0; if (this.y < 0) this.y = height; if (this.y > height) this.y = 0; this.history.push({x: this.x, y: this.y}); if (this.history.length > this.maxLength) this.history.shift(); } draw() { if (this.history.length < 2) return; ctx.beginPath(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; ctx.lineWidth = this.thickness; ctx.lineCap = "round"; ctx.moveTo(this.history[0].x, this.history[0].y); for (let i = 1; i < this.history.length; i++) { let dx = Math.abs(this.history[i].x - this.history[i-1].x); let dy = Math.abs(this.history[i].y - this.history[i-1].y); if(dx > 100 || dy > 100) ctx.moveTo(this.history[i].x, this.history[i].y); else ctx.lineTo(this.history[i].x, this.history[i].y); } ctx.stroke(); } }
+        function initParticles() { particles = []; let count = (width*height)/5000; for(let i=0; i<count; i++) particles.push(new Particle()); }
+        function initWorms() { worms = []; for(let i=0; i<5; i++) worms.push(new Worm()); }
+        function animate() { ctx.clearRect(0, 0, width, height); drawGrid(); particles.forEach(p => { p.update(); p.draw(); }); worms.forEach(w => { w.update(); w.draw(); }); scrollSpeed *= 0.9; requestAnimationFrame(animate); }
+        resize(); animate();
+
+        const vCanvas = document.getElementById('vision-canvas'); const vCtx = vCanvas.getContext('2d'); let vWidth, vHeight, vParticles = [];
+        function vResize() { const section = document.querySelector('.vision-section'); vWidth = vCanvas.width = section.offsetWidth; vHeight = vCanvas.height = section.offsetHeight; initVParticles(); }
+        class VParticle { constructor() { this.x = Math.random() * vWidth; this.y = Math.random() * vHeight; this.size = Math.random() * 1.5; this.speedY = Math.random() * 0.5 + 0.2; this.baseX = this.x; } update() { this.y += this.speedY; if(this.y > vHeight) this.y = 0; const rect = vCanvas.getBoundingClientRect(); const localMouseX = mouseX - rect.left; const localMouseY = mouseY - rect.top; let dx = localMouseX - this.x; let dy = localMouseY - this.y; let dist = Math.sqrt(dx*dx + dy*dy); if (dist < 100) { const force = (100 - dist) / 100; const angle = Math.atan2(dy, dx); const push = force * 5; this.x -= Math.cos(angle) * push; this.y -= Math.sin(angle) * push; } else { if(this.x !== this.baseX) this.x += (this.baseX - this.x) * 0.05; } } draw() { vCtx.fillStyle = "rgba(165, 242, 243, 0.3)"; vCtx.beginPath(); vCtx.arc(this.x, this.y, this.size, 0, Math.PI*2); vCtx.fill(); } }
+        function initVParticles() { vParticles = []; const cols = Math.floor(vWidth / 10); for(let i=0; i<cols * 15; i++) { vParticles.push(new VParticle()); } }
+        function vAnimate() { vCtx.clearRect(0, 0, vWidth, vHeight); vParticles.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(vAnimate); }
+        window.addEventListener('load', () => { vResize(); vAnimate(); }); window.addEventListener('resize', vResize);
+
+        gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
+        // --- LENIS SMOOTH SCROLL ---
+        const lenis = new Lenis({ duration: 1.2, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), direction: 'vertical', gestureDirection: 'vertical', smooth: true, mouseMultiplier: 1, smoothTouch: false, touchMultiplier: 2, infinite: false });
+        function raf(time) { lenis.raf(time); requestAnimationFrame(raf); } requestAnimationFrame(raf);
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+        gsap.ticker.lagSmoothing(0, 0);
+        
+        if (window.innerWidth > 768) {
+            const hero = document.querySelector('.hero'); const parallax = document.querySelector('.parallax-wrapper');
+            hero.addEventListener('mousemove', (e) => { let x = (window.innerWidth/2 - e.clientX)/25, y = (window.innerHeight/2 - e.clientY)/25; let rx = (window.innerHeight/2 - e.clientY)/60, ry = (e.clientX - window.innerWidth/2)/60; parallax.style.transform = `translate(${x}px, ${y}px) rotateX(${rx}deg) rotateY(${ry}deg)`; });
+            hero.addEventListener('mouseleave', () => parallax.style.transform = `translate(0,0) rotateX(0) rotateY(0)`);
+            gsap.to(".roster-container", { xPercent: -75, ease: "none", scrollTrigger: { trigger: ".roster-section", pin: true, scrub: 1, end: "+=2000" } });
+            
+            // --- PARALLAX EFFECTS (SCROLL LAG) ---
+            gsap.to(".vision-graphic", { y: -50, ease: "none", scrollTrigger: { trigger: ".vision-section", start: "top bottom", end: "bottom top", scrub: 1.5 } });
+            gsap.to(".impact-title", { y: -100, ease: "none", scrollTrigger: { trigger: ".achievements-section", start: "top bottom", end: "bottom top", scrub: 1.5 } });
+        }
+
+        gsap.to(".scroll-progress-bar", { scaleY: 1, ease: "none", scrollTrigger: { trigger: "body", start: "top top", end: "bottom bottom", scrub: 0.3 } });
+        
+        // --- CURSOR HOVER LOGIC ---
+        const allHoverTargets = document.querySelectorAll('a, button, .artist-card, .bento-card, .tape-item, .logo-mini, .hero-title, .star-svg');
+        allHoverTargets.forEach(target => {
+            target.addEventListener('mouseenter', () => cursorOutline.classList.add('cursor-hover'));
+            target.addEventListener('mouseleave', () => cursorOutline.classList.remove('cursor-hover'));
+        });
+
+        // --- SCROLLYTELLING CINE-REVEALS ---
+        gsap.utils.toArray('.scrolly-reveal').forEach(el => { 
+            gsap.to(el, { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 2, ease: "expo.out", scrollTrigger: { trigger: el, start: "top 85%" } }); 
+        });
+
+        gsap.fromTo(".vision-graphic", { opacity: 0, scale: 0.5, rotationY: 45 }, { opacity: 1, scale: 1, rotationY: 0, duration: 2, ease: "power3.out", scrollTrigger: { trigger: ".vision-section", start: "top 60%" } });
+        gsap.fromTo(".bento-card", { y: 150, opacity: 0, scale: 0.9, filter: "blur(10px)" }, { y: 0, opacity: 1, scale: 1, filter: "blur(0px)", duration: 2, stagger: 0.2, ease: "expo.out", scrollTrigger: { trigger: ".achievements-section", start: "top 75%" } });
+
+        // VISION PARALLAX — different elements scroll at different speeds
+        if (window.innerWidth > 768) {
+            // Graphic drifts up faster
+            gsap.to(".vision-graphic", { y: -100, ease: "none", scrollTrigger: { trigger: ".vision-section", start: "top bottom", end: "bottom top", scrub: 1 } });
+            // Text content drifts up slower (feels pushed back in depth)
+            gsap.to(".vision-content", { y: -40, ease: "none", scrollTrigger: { trigger: ".vision-section", start: "top bottom", end: "bottom top", scrub: 2 } });
+            // Pyramid drifts up even faster (foreground object)
+            gsap.to(".pyramid-wrapper", { y: 80, ease: "none", scrollTrigger: { trigger: ".vision-section", start: "top bottom", end: "bottom top", scrub: 0.6 } });
+            // Vision canvas label orbits very slowly
+            gsap.to(".vision-orbit", { rotation: 360, ease: "none", scrollTrigger: { trigger: ".vision-section", start: "top bottom", end: "bottom top", scrub: 3 } });
+        }
+        
+        let tiktokObj = { val: 0 };
+        ScrollTrigger.create({ trigger: ".card-tiktok", start: "top 80%", onEnter: () => { gsap.to(tiktokObj, { val: 1000, duration: 2.5, ease: "power2.out", onUpdate: () => { let current = Math.floor(tiktokObj.val); document.getElementById('tiktok-counter').innerText = current < 1000 ? "+" + current + "M" : "+1B"; } }); } });
+        gsap.to(".tt-graph-line", { strokeDashoffset: 0, duration: 3, ease: "power2.out", scrollTrigger: { trigger: ".card-tiktok", start: "top 80%" } });
+        gsap.to(".chart-line", { strokeDashoffset: 0, duration: 2, ease: "power2.out", scrollTrigger: { trigger: ".card-chart", start: "top 80%" } });
+        gsap.fromTo(".input-group", { x: -50, opacity: 0 }, { x: 0, opacity: 1, duration: 1, stagger: 0.1, ease: "expo.out", scrollTrigger: { trigger: ".submit-section", start: "top 80%" } });
+
+        // =============================================
+        //  MISSION SECTION ANIMATIONS
+        // =============================================
+
+        // Mission intro — slides up from below
+        gsap.fromTo(".mission-eyebrow", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1.2, ease: "expo.out", scrollTrigger: { trigger: ".mission-intro", start: "top 82%" } });
+        gsap.fromTo(".mission-headline", { opacity: 0, y: 60, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.8, ease: "expo.out", delay: 0.15, scrollTrigger: { trigger: ".mission-intro", start: "top 78%" } });
+        gsap.fromTo(".mission-subline", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1.4, ease: "expo.out", delay: 0.3, scrollTrigger: { trigger: ".mission-intro", start: "top 78%" } });
+
+        // Playlist label col slides in from left
+        gsap.fromTo("#playlist-label-col", { opacity: 0, x: -80 }, { opacity: 1, x: 0, duration: 1.6, ease: "expo.out", scrollTrigger: { trigger: ".playlist-block", start: "top 78%" } });
+
+        // Stacked playlist items fly in from RIGHT one by one
+        document.querySelectorAll('.pstack-item').forEach((item, i) => {
+            gsap.fromTo(item,
+                { opacity: 0, x: 200 + i * 30, scale: 0.9 },
+                { opacity: 1, x: 0, scale: 1,
+                  duration: 1.6, ease: "expo.out", delay: i * 0.12,
+                  scrollTrigger: { trigger: "#pstack-list", start: "top 82%" } }
+            );
+        });
+
+        // Cursor hover for stack items + links
+        document.querySelectorAll('.pstack-item, .pstack-reveal-title').forEach(el => {
+            el.addEventListener('mouseenter', () => cursorOutline.classList.add('cursor-hover'));
+            el.addEventListener('mouseleave', () => cursorOutline.classList.remove('cursor-hover'));
+        });
+
+        // Scrub parallax: playlist label drifts slower than the stack
+        if (window.innerWidth > 768) {
+            gsap.to("#playlist-label-col", { y: -60, ease: "none", scrollTrigger: { trigger: ".playlist-block", start: "top bottom", end: "bottom top", scrub: 2 } });
+            gsap.to("#pstack-list", { y: -30, ease: "none", scrollTrigger: { trigger: ".playlist-block", start: "top bottom", end: "bottom top", scrub: 1 } });
+        }
+
+        // TikTok section headlines slide in from RIGHT
+        gsap.fromTo("#tt-line-1", { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 1.4, ease: "expo.out", scrollTrigger: { trigger: "#tiktok-block", start: "top 78%" } });
+        gsap.fromTo("#tt-line-2", { opacity: 0, x: 100 }, { opacity: 1, x: 0, duration: 1.4, ease: "expo.out", delay: 0.2, scrollTrigger: { trigger: "#tiktok-block", start: "top 78%" } });
+
+        // SVG graph line draws in from left (stroke-dashoffset) + col slides from LEFT
+        gsap.fromTo("#tt-graph-col", { opacity: 0, x: -80 }, { opacity: 1, x: 0, duration: 1.6, ease: "expo.out", scrollTrigger: { trigger: "#tt-graph-col", start: "top 80%" } });
+        gsap.to(".tiktok-graph-path", { strokeDashoffset: 0, duration: 2.5, ease: "power2.out", scrollTrigger: { trigger: "#tt-graph-col", start: "top 80%" } });
+
+        // TikTok copy + stat slides in from RIGHT
+        gsap.fromTo("#tt-copy", { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 1.6, ease: "expo.out", scrollTrigger: { trigger: "#tt-copy", start: "top 82%" } });
+
+        // Scrub parallax on mission section headlines
+        if (window.innerWidth > 768) {
+            gsap.to(".mission-headline", { y: -60, ease: "none", scrollTrigger: { trigger: ".mission-intro", start: "top bottom", end: "bottom top", scrub: 1.5 } });
+            gsap.to(".playlist-label-text h3", { y: -40, ease: "none", scrollTrigger: { trigger: ".playlist-block", start: "top bottom", end: "bottom top", scrub: 1.5 } });
+            gsap.to("#tt-line-1", { y: -50, ease: "none", scrollTrigger: { trigger: "#tiktok-block", start: "top bottom", end: "bottom top", scrub: 1.5 } });
+        }
+        
+        document.querySelectorAll('nav a').forEach(link => { link.addEventListener('click', e => { e.preventDefault(); const target = link.getAttribute('href'); lenis.scrollTo(target, { duration: 1.5, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) }); }); });
+        
+        const btn = document.getElementById('portal-btn');
+        btn.addEventListener('click', (e) => { e.preventDefault(); btn.innerHTML = "UPLOADING DATA..."; btn.style.background = "#fff"; btn.style.color = "#000"; setTimeout(() => { btn.innerHTML = "Transmission complete. We are actually listening."; btn.style.pointerEvents = "none"; }, 2000); });
+
+        let stackTl = gsap.timeline({ scrollTrigger: { trigger: ".section-releases", start: "top center", end: "bottom center", scrub: 1 } });
+        stackTl.to(".w-left", { x: -140, rotation: -5 }, 0).to(".w-right", { x: 140, rotation: 5 }, 0).to(".drop-info", { opacity: 1, y: 0 }, 0.5);
+        const stackTrigger = document.getElementById('stack-trigger'); const stackInfo = document.getElementById('stack-info'); const tapeView = document.getElementById('tape-view'); const tapeTrack = document.getElementById('tape-track'); const tapeArrow = document.getElementById('tape-arrow');
+        let tapePosition = 0; let tapeSpeed = 0.5; let baseSpeed = 0.5;
+        
+        let isTapeActive = false; let isHoveringTape = false;
+        tapeView.addEventListener('mouseenter', () => { isHoveringTape = true; lenis.stop(); });
+        tapeView.addEventListener('mouseleave', () => { isHoveringTape = false; lenis.start(); });
+        tapeView.addEventListener('wheel', (e) => { tapeSpeed += e.deltaY * 0.05; });
+        tapeArrow.addEventListener('click', () => { tapeSpeed += 5; });
+        
+        stackTrigger.addEventListener('click', (e) => { e.preventDefault(); if(isTapeActive) return; isTapeActive = true; stackTl.kill(); gsap.to([stackTrigger, stackInfo], { scale: 0, opacity: 0, duration: 0.5, ease: "back.in(1.7)", onComplete: () => { stackTrigger.style.display = 'none'; tapeView.style.visibility = "visible"; tapeView.style.opacity = "1"; tapeView.style.pointerEvents = "all"; gsap.fromTo(".tape-item", { x: 0, opacity: 0, scale: 0.5 }, { x: 0, opacity: 1, scale: 1, duration: 1.2, ease: "expo.out", stagger: { amount: 1, from: "center" }, onComplete: () => { requestAnimationFrame(tapeLoop); } }); } }); });
+        function tapeLoop() { tapeSpeed = tapeSpeed * 0.95 + baseSpeed * 0.05; tapePosition -= tapeSpeed; if (tapePosition <= -5120) { tapePosition += 5120; } else if (tapePosition > 0) { tapePosition -= 5120; } tapeTrack.style.transform = `translateX(${tapePosition}px)`; requestAnimationFrame(tapeLoop); }
+        
+        // --- HERO SNAP (Hybrid Scroll Logic from FutureVille) ---
+        let isHeroScrolling = false;
+        function smoothScrollTo(targetId) {
+            if (isHeroScrolling) return;
+            isHeroScrolling = true;
+            lenis.stop();
+            gsap.to(window, {
+                duration: 1.5,
+                scrollTo: targetId,
+                ease: "power4.inOut",
+                onComplete: () => { setTimeout(() => { isHeroScrolling = false; lenis.start(); }, 500); }
+            });
+            if (targetId === "#releases") {
+                gsap.to(heroContent, { opacity: 0, scale: 0.95, y: -40, duration: 1.5, ease: "power2.out" });
+            } else if (targetId === "#hero-section") {
+                gsap.to(heroContent, { opacity: 1, scale: 1, y: 0, duration: 1.5, ease: "power2.out" });
+            }
+        }
+
+        window.addEventListener('wheel', (e) => {
+            if (isTapeActive && isHoveringTape) return;
+            if (isHeroScrolling) { e.preventDefault(); return; }
+            if (e.deltaY > 0 && window.scrollY < window.innerHeight / 2) {
+                e.preventDefault(); smoothScrollTo("#releases");
+            } else if (e.deltaY < 0 && window.scrollY > 10 && window.scrollY < window.innerHeight * 1.5) {
+                const rTop = document.querySelector('#releases').offsetTop;
+                if (window.scrollY <= rTop + 100) { e.preventDefault(); smoothScrollTo("#hero-section"); }
+            }
+        }, { passive: false });
+
+    </script>
+</body>
+</html>
